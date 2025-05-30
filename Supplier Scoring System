@@ -1,0 +1,43 @@
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+
+def calculate_supplier_score(data):
+    """
+    Calculate comprehensive supplier score based on multiple performance metrics
+    
+    Parameters:
+    data (DataFrame): Contains supplier performance metrics
+    
+    Returns:
+    DataFrame: Supplier scores and rankings
+    """
+    # Define weights for each metric (adjust based on business priorities)
+    weights = {
+        'delivery_timeliness': 0.25,
+        'quality_score': 0.30,
+        'price_competitiveness': 0.20,
+        'order_fulfillment': 0.15,
+        'lead_time': 0.10
+    }
+    
+    # Normalize metrics (0-1 scale)
+    scaler = MinMaxScaler()
+    normalized_data = data.copy()
+    
+    # Higher is better metrics
+    higher_better = ['delivery_timeliness', 'quality_score', 'order_fulfillment', 'price_competitiveness']
+    for metric in higher_better:
+        normalized_data[metric] = scaler.fit_transform(data[[metric]])
+    
+    # Lower is better metrics (like lead time)
+    normalized_data['lead_time'] = 1 - scaler.fit_transform(data[['lead_time']])
+    
+    # Calculate weighted score
+    normalized_data['overall_score'] = sum(normalized_data[metric] * weight 
+                                         for metric, weight in weights.items())
+    
+    # Rank suppliers
+    normalized_data['rank'] = normalized_data['overall_score'].rank(ascending=False)
+    
+    return normalized_data.sort_values('rank')
