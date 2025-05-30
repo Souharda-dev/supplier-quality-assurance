@@ -1,4 +1,4 @@
-Supplier Performance Analytics & Forecasting for FMCG Chocolate Brand
+**Supplier Performance Analytics & Forecasting for FMCG Chocolate Brand**
 A Power BI & Time Series Forecasting Solution
 
 📌 Project Overview
