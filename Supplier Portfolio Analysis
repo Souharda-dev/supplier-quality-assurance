@@ -1,0 +1,51 @@
+def analyze_supplier_portfolio(df, forecast_results):
+    """
+    Analyze supplier portfolio based on current performance and future forecasts
+    
+    Parameters:
+    df (DataFrame): Current supplier performance data
+    forecast_results (dict): Dictionary of forecast results for each supplier
+    
+    Returns:
+    DataFrame: Portfolio analysis with recommendations
+    """
+    analysis = df.copy()
+    
+    # Calculate forecast trends
+    trend_metrics = []
+    for supplier in forecast_results:
+        forecast = forecast_results[supplier]
+        # Get slope of trend component
+        trend_slope = np.polyfit(
+            np.arange(len(forecast['trend'])), 
+            forecast['trend'], 
+            1
+        )[0]
+        trend_metrics.append({
+            'supplier_id': supplier,
+            'trend_slope': trend_slope
+        })
+    
+    trend_df = pd.DataFrame(trend_metrics)
+    analysis = analysis.merge(trend_df, on='supplier_id')
+    
+    # Categorize suppliers
+    conditions = [
+        (analysis['overall_score'] >= 0.8) & (analysis['trend_slope'] > 0),
+        (analysis['overall_score'] >= 0.8) & (analysis['trend_slope'] <= 0),
+        (analysis['overall_score'] >= 0.6) & (analysis['trend_slope'] > 0),
+        (analysis['overall_score'] < 0.6) & (analysis['trend_slope'] > 0),
+        (analysis['overall_score'] < 0.6) & (analysis['trend_slope'] <= 0)
+    ]
+    
+    choices = [
+        'Strategic Partner - Invest',
+        'Key Supplier - Maintain',
+        'Emerging Supplier - Develop',
+        'At-Risk Supplier - Improve',
+        'Underperformer - Exit'
+    ]
+    
+    analysis['recommendation'] = np.select(conditions, choices)
+    
+    return analysis.sort_values(['overall_score', 'trend_slope'], ascending=False)
